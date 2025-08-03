@@ -1,0 +1,41 @@
+{
+  "Files": [
+    {
+      "Id": "/workspace/IELTSReadingApp/obj/Debug/net8.0/scopedcss/projectbundle/IELTSReadingApp.bundle.scp.css",
+      "PackagePath": "staticwebassets/IELTSReadingApp.bundle.scp.css"
+    },
+    {
+      "Id": "/workspace/IELTSReadingApp/wwwroot/app.css",
+      "PackagePath": "staticwebassets/app.css"
+    },
+    {
+      "Id": "/workspace/IELTSReadingApp/wwwroot/bootstrap/bootstrap.min.css",
+      "PackagePath": "staticwebassets/bootstrap/bootstrap.min.css"
+    },
+    {
+      "Id": "/workspace/IELTSReadingApp/wwwroot/bootstrap/bootstrap.min.css.map",
+      "PackagePath": "staticwebassets/bootstrap/bootstrap.min.css.map"
+    },
+    {
+      "Id": "/workspace/IELTSReadingApp/wwwroot/favicon.png",
+      "PackagePath": "staticwebassets/favicon.png"
+    },
+    {
+      "Id": "obj/Debug/net8.0/staticwebassets/msbuild.IELTSReadingApp.Microsoft.AspNetCore.StaticWebAssets.props",
+      "PackagePath": "build\\Microsoft.AspNetCore.StaticWebAssets.props"
+    },
+    {
+      "Id": "obj/Debug/net8.0/staticwebassets/msbuild.build.IELTSReadingApp.props",
+      "PackagePath": "build\\IELTSReadingApp.props"
+    },
+    {
+      "Id": "obj/Debug/net8.0/staticwebassets/msbuild.buildMultiTargeting.IELTSReadingApp.props",
+      "PackagePath": "buildMultiTargeting\\IELTSReadingApp.props"
+    },
+    {
+      "Id": "obj/Debug/net8.0/staticwebassets/msbuild.buildTransitive.IELTSReadingApp.props",
+      "PackagePath": "buildTransitive\\IELTSReadingApp.props"
+    }
+  ],
+  "ElementsToRemove": []
+}

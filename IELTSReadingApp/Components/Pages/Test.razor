@@ -1,0 +1,561 @@
+@page "/test/{testId:int}"
+@using IELTSReadingApp.Models
+@using IELTSReadingApp.Services
+@inject TestDataService TestDataService
+@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
+@rendermode InteractiveServer
+@implements IDisposable
+
+<PageTitle>IELTS Reading Test - @(currentTest?.Title ?? "Loading...")</PageTitle>
+
+@if (currentTest == null)
+{
+    <div class="container-fluid py-5">
+        <div class="text-center">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <h4 class="mt-3">Loading test...</h4>
+        </div>
+    </div>
+}
+else if (!testStarted)
+{
+    <!-- Test Instructions -->
+    <div class="container py-4">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="card shadow">
+                    <div class="card-header bg-primary text-white">
+                        <h3 class="mb-0">
+                            <i class="fas fa-info-circle me-2"></i>Test Instructions
+                        </h3>
+                    </div>
+                    <div class="card-body">
+                        <h4 class="text-primary mb-3">@currentTest.Title</h4>
+                        <p class="lead">@currentTest.Description</p>
+                        
+                        <div class="row mb-4">
+                            <div class="col-md-3 text-center">
+                                <div class="bg-light rounded p-3">
+                                    <i class="fas fa-clock fa-2x text-primary mb-2"></i>
+                                    <h5>@currentTest.TotalTimeMinutes Minutes</h5>
+                                    <small class="text-muted">Total Time</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3 text-center">
+                                <div class="bg-light rounded p-3">
+                                    <i class="fas fa-question-circle fa-2x text-success mb-2"></i>
+                                    <h5>@currentTest.TotalQuestions Questions</h5>
+                                    <small class="text-muted">Total Questions</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3 text-center">
+                                <div class="bg-light rounded p-3">
+                                    <i class="fas fa-file-alt fa-2x text-info mb-2"></i>
+                                    <h5>@currentTest.Sections.Count Sections</h5>
+                                    <small class="text-muted">Reading Passages</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3 text-center">
+                                <div class="bg-light rounded p-3">
+                                    <i class="fas fa-star fa-2x text-warning mb-2"></i>
+                                    <h5>@currentTest.Difficulty</h5>
+                                    <small class="text-muted">Difficulty Level</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="alert alert-info">
+                            <h5><i class="fas fa-exclamation-triangle me-2"></i>Important Instructions:</h5>
+                            <ul class="mb-0">
+                                <li>You have <strong>@currentTest.TotalTimeMinutes minutes</strong> to complete all sections</li>
+                                <li>Read each passage carefully before answering questions</li>
+                                <li>You can navigate between sections and questions</li>
+                                <li>Make sure to transfer your answers - no extra time is given</li>
+                                <li>Spelling and grammar matter for written answers</li>
+                                <li>The timer will be visible throughout the test</li>
+                            </ul>
+                        </div>
+
+                        <div class="text-center">
+                            <button class="btn btn-success btn-lg px-5" @onclick="StartTest">
+                                <i class="fas fa-play me-2"></i>Start Test Now
+                            </button>
+                            <div class="mt-2">
+                                <a href="/" class="btn btn-link">Back to Tests</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+else if (testCompleted)
+{
+    <!-- Test Results -->
+    <div class="container py-4">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="card shadow">
+                    <div class="card-header bg-success text-white">
+                        <h3 class="mb-0">
+                            <i class="fas fa-check-circle me-2"></i>Test Completed!
+                        </h3>
+                    </div>
+                    <div class="card-body text-center">
+                        <h2 class="display-4 text-success mb-3">@testResult.BandScore</h2>
+                        <h4>IELTS Band Score</h4>
+                        <p class="lead">You scored @testResult.CorrectAnswers out of @testResult.TotalQuestions questions correctly</p>
+                        
+                        <div class="row mt-4">
+                            <div class="col-md-4">
+                                <div class="bg-light rounded p-3">
+                                    <h5 class="text-primary">@testResult.CorrectAnswers/@testResult.TotalQuestions</h5>
+                                    <small class="text-muted">Correct Answers</small>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="bg-light rounded p-3">
+                                    <h5 class="text-primary">@(Math.Round(testResult.Score, 1))%</h5>
+                                    <small class="text-muted">Percentage Score</small>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="bg-light rounded p-3">
+                                    <h5 class="text-primary">@FormatTimeSpan(testResult.TimeTaken)</h5>
+                                    <small class="text-muted">Time Taken</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-4">
+                            <button class="btn btn-primary me-2" @onclick="ReviewAnswers">
+                                <i class="fas fa-eye me-2"></i>Review Answers
+                            </button>
+                            <button class="btn btn-outline-primary me-2" @onclick="RetakeTest">
+                                <i class="fas fa-redo me-2"></i>Retake Test
+                            </button>
+                            <a href="/" class="btn btn-outline-secondary">
+                                <i class="fas fa-home me-2"></i>Back to Tests
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+else
+{
+    <!-- Test Interface -->
+    <div class="container-fluid">
+        <!-- Timer and Progress Bar -->
+        <div class="sticky-top bg-white shadow-sm border-bottom py-2">
+            <div class="container-fluid">
+                <div class="row align-items-center">
+                    <div class="col-md-3">
+                        <h5 class="mb-0">@currentTest.Title</h5>
+                        <small class="text-muted">Section @(currentSectionIndex + 1) of @currentTest.Sections.Count</small>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="progress" style="height: 8px;">
+                            <div class="progress-bar" role="progressbar" 
+                                 style="width: @(GetProgressPercentage())%" 
+                                 aria-valuenow="@GetProgressPercentage()" 
+                                 aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                        <small class="text-muted">
+                            Question @(GetCurrentQuestionNumber()) of @currentTest.TotalQuestions
+                        </small>
+                    </div>
+                    <div class="col-md-3 text-end">
+                        <div class="timer @(remainingTime.TotalMinutes <= 5 ? "text-danger" : "text-primary")">
+                            <i class="fas fa-clock me-1"></i>
+                            <strong>@FormatTimeSpan(remainingTime)</strong>
+                        </div>
+                        <button class="btn btn-sm btn-outline-danger ms-2" @onclick="SubmitTest">
+                            <i class="fas fa-check me-1"></i>Submit
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Reading Passage -->
+            <div class="col-lg-6 p-4" style="height: calc(100vh - 120px); overflow-y: auto;">
+                @if (currentSection != null)
+                {
+                    <div class="reading-passage">
+                        <div class="mb-3">
+                            <h4 class="text-primary">@currentSection.Passage.Title</h4>
+                            <p class="text-muted mb-2">
+                                <small>
+                                    <i class="fas fa-book me-1"></i>Source: @currentSection.Passage.Source |
+                                    <i class="fas fa-word me-1"></i>@currentSection.Passage.WordCount words
+                                </small>
+                            </p>
+                        </div>
+
+                        <div class="passage-content">
+                            @foreach (var paragraph in currentSection.Passage.Paragraphs.Select((p, i) => new { Content = p, Index = i }))
+                            {
+                                <p class="mb-3 lh-lg" id="paragraph-@paragraph.Index">
+                                    <span class="paragraph-label badge bg-light text-dark me-2">@((char)('A' + paragraph.Index))</span>
+                                    @paragraph.Content
+                                </p>
+                            }
+                        </div>
+
+                        @if (currentSection.Passage.Vocabulary.Any())
+                        {
+                            <div class="vocabulary-box mt-4 p-3 bg-light rounded">
+                                <h6><i class="fas fa-book me-2"></i>Vocabulary</h6>
+                                @foreach (var vocab in currentSection.Passage.Vocabulary)
+                                {
+                                    <div class="mb-1">
+                                        <strong>@vocab.Key:</strong> @vocab.Value
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+
+            <!-- Questions -->
+            <div class="col-lg-6 p-4 bg-light" style="height: calc(100vh - 120px); overflow-y: auto;">
+                @if (currentSection != null)
+                {
+                    <div class="questions-section">
+                        <div class="mb-3">
+                            <h5>@currentSection.Instructions</h5>
+                        </div>
+
+                        @foreach (var question in currentSection.Questions.Select((q, i) => new { Question = q, Index = i }))
+                        {
+                            <div class="question-card card mb-3 @(currentQuestionIndex == question.Index ? "border-primary" : "")">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <h6 class="card-title mb-0">
+                                            Question @question.Question.QuestionNumber
+                                            <span class="badge bg-secondary ms-2">@GetQuestionTypeDisplay(question.Question.Type)</span>
+                                        </h6>
+                                        @if (userAnswers.ContainsKey(question.Question.Id))
+                                        {
+                                            <i class="fas fa-check-circle text-success"></i>
+                                        }
+                                    </div>
+
+                                    <p class="card-text">@question.Question.QuestionText</p>
+
+                                    @if (question.Question.Type == QuestionType.MultipleChoice)
+                                    {
+                                        <div class="options">
+                                            @foreach (var option in question.Question.Options)
+                                            {
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="radio" 
+                                                           name="question-@question.Question.Id" 
+                                                           id="option-@question.Question.Id-@option"
+                                                           value="@option"
+                                                           checked="@(GetUserAnswer(question.Question.Id) == option)"
+                                                           @onchange="@((e) => SaveAnswer(question.Question.Id, e.Value?.ToString() ?? ""))" />
+                                                    <label class="form-check-label" for="option-@question.Question.Id-@option">
+                                                        @option
+                                                    </label>
+                                                </div>
+                                            }
+                                        </div>
+                                    }
+                                    else if (question.Question.Type == QuestionType.TrueFalseNotGiven || question.Question.Type == QuestionType.YesNoNotGiven)
+                                    {
+                                        var options = question.Question.Type == QuestionType.TrueFalseNotGiven 
+                                            ? new[] { "True", "False", "Not Given" }
+                                            : new[] { "Yes", "No", "Not Given" };
+                                        
+                                        <div class="options">
+                                            @foreach (var option in options)
+                                            {
+                                                <div class="form-check form-check-inline">
+                                                    <input class="form-check-input" type="radio" 
+                                                           name="question-@question.Question.Id" 
+                                                           id="option-@question.Question.Id-@option"
+                                                           value="@option"
+                                                           checked="@(GetUserAnswer(question.Question.Id) == option)"
+                                                           @onchange="@((e) => SaveAnswer(question.Question.Id, e.Value?.ToString() ?? ""))" />
+                                                    <label class="form-check-label" for="option-@question.Question.Id-@option">
+                                                        @option
+                                                    </label>
+                                                </div>
+                                            }
+                                        </div>
+                                    }
+                                    else if (question.Question.Type == QuestionType.SentenceCompletion || 
+                                             question.Question.Type == QuestionType.ShortAnswerQuestions ||
+                                             question.Question.Type == QuestionType.SummaryCompletion)
+                                    {
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" 
+                                                   placeholder="@(question.Question.MaxWords > 0 ? $"Maximum {question.Question.MaxWords} words" : "Enter your answer")"
+                                                   value="@GetUserAnswer(question.Question.Id)"
+                                                   @onchange="@((e) => SaveAnswer(question.Question.Id, e.Value?.ToString() ?? ""))" />
+                                        </div>
+                                        @if (question.Question.MaxWords > 0)
+                                        {
+                                            <small class="text-muted">Maximum @question.Question.MaxWords words</small>
+                                        }
+                                    }
+                                    else if (question.Question.Type == QuestionType.MatchingInformation)
+                                    {
+                                        <div class="input-group">
+                                            <select class="form-select" 
+                                                    value="@GetUserAnswer(question.Question.Id)"
+                                                    @onchange="@((e) => SaveAnswer(question.Question.Id, e.Value?.ToString() ?? ""))">
+                                                <option value="">Select paragraph...</option>
+                                                @for (int i = 0; i < currentSection.Passage.Paragraphs.Count; i++)
+                                                {
+                                                    <option value="@((char)('A' + i))">Paragraph @((char)('A' + i))</option>
+                                                }
+                                            </select>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        }
+
+                        <!-- Navigation -->
+                        <div class="d-flex justify-content-between mt-4">
+                            <button class="btn btn-outline-primary" @onclick="PreviousSection" disabled="@(currentSectionIndex == 0)">
+                                <i class="fas fa-chevron-left me-2"></i>Previous Section
+                            </button>
+                            <button class="btn btn-primary" @onclick="NextSection" disabled="@(currentSectionIndex >= currentTest.Sections.Count - 1)">
+                                Next Section<i class="fas fa-chevron-right ms-2"></i>
+                            </button>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+}
+
+<style>
+    .timer {
+        font-size: 1.1rem;
+    }
+    
+    .reading-passage {
+        font-family: 'Times New Roman', serif;
+        line-height: 1.6;
+    }
+    
+    .paragraph-label {
+        font-size: 0.8rem;
+        vertical-align: top;
+    }
+    
+    .question-card {
+        transition: all 0.2s;
+    }
+    
+    .question-card.border-primary {
+        box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    }
+    
+    .vocabulary-box {
+        font-size: 0.9rem;
+    }
+    
+    .sticky-top {
+        z-index: 1020;
+    }
+</style>
+
+@code {
+    [Parameter] public int TestId { get; set; }
+    
+    private ReadingTest? currentTest;
+    private ReadingSection? currentSection;
+    private int currentSectionIndex = 0;
+    private int currentQuestionIndex = 0;
+    private bool testStarted = false;
+    private bool testCompleted = false;
+    private DateTime testStartTime;
+    private TimeSpan remainingTime;
+    private Timer? timer;
+    private Dictionary<int, string> userAnswers = new();
+    private TestResult testResult = new();
+
+    protected override void OnInitialized()
+    {
+        currentTest = TestDataService.GetTestById(TestId);
+        if (currentTest != null)
+        {
+            currentSection = currentTest.Sections.FirstOrDefault();
+            remainingTime = TimeSpan.FromMinutes(currentTest.TotalTimeMinutes);
+        }
+    }
+
+    private void StartTest()
+    {
+        testStarted = true;
+        testStartTime = DateTime.Now;
+        StartTimer();
+    }
+
+    private void StartTimer()
+    {
+        timer = new Timer(UpdateTimer, null, TimeSpan.Zero, TimeSpan.FromSeconds(1));
+    }
+
+    private void UpdateTimer(object? state)
+    {
+        var elapsed = DateTime.Now - testStartTime;
+        remainingTime = TimeSpan.FromMinutes(currentTest!.TotalTimeMinutes) - elapsed;
+        
+        if (remainingTime <= TimeSpan.Zero)
+        {
+            remainingTime = TimeSpan.Zero;
+            InvokeAsync(SubmitTest);
+        }
+        
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void SaveAnswer(int questionId, string answer)
+    {
+        userAnswers[questionId] = answer;
+    }
+
+    private string GetUserAnswer(int questionId)
+    {
+        return userAnswers.GetValueOrDefault(questionId, "");
+    }
+
+    private void NextSection()
+    {
+        if (currentSectionIndex < currentTest!.Sections.Count - 1)
+        {
+            currentSectionIndex++;
+            currentSection = currentTest.Sections[currentSectionIndex];
+            currentQuestionIndex = 0;
+        }
+    }
+
+    private void PreviousSection()
+    {
+        if (currentSectionIndex > 0)
+        {
+            currentSectionIndex--;
+            currentSection = currentTest!.Sections[currentSectionIndex];
+            currentQuestionIndex = 0;
+        }
+    }
+
+    private void SubmitTest()
+    {
+        timer?.Dispose();
+        
+        // Calculate results
+        var allQuestions = currentTest!.Sections.SelectMany(s => s.Questions).ToList();
+        var correctAnswers = 0;
+        
+        foreach (var question in allQuestions)
+        {
+            var userAnswer = userAnswers.GetValueOrDefault(question.Id, "");
+            if (string.Equals(userAnswer.Trim(), question.CorrectAnswer.Trim(), StringComparison.OrdinalIgnoreCase))
+            {
+                correctAnswers++;
+            }
+        }
+
+        testResult = new TestResult
+        {
+            TestId = TestId,
+            CorrectAnswers = correctAnswers,
+            TotalQuestions = allQuestions.Count,
+            Score = (double)correctAnswers / allQuestions.Count * 100,
+            BandScore = BandScoreCalculator.CalculateBandScore(correctAnswers),
+            TimeTaken = DateTime.Now - testStartTime,
+            CompletedAt = DateTime.Now
+        };
+
+        testCompleted = true;
+        StateHasChanged();
+    }
+
+    private double GetProgressPercentage()
+    {
+        if (currentTest == null) return 0;
+        
+        var totalQuestions = currentTest.Sections.SelectMany(s => s.Questions).Count();
+        var answeredQuestions = userAnswers.Count;
+        
+        return totalQuestions > 0 ? (double)answeredQuestions / totalQuestions * 100 : 0;
+    }
+
+    private int GetCurrentQuestionNumber()
+    {
+        var questionsBeforeCurrentSection = 0;
+        for (int i = 0; i < currentSectionIndex; i++)
+        {
+            questionsBeforeCurrentSection += currentTest!.Sections[i].Questions.Count;
+        }
+        return questionsBeforeCurrentSection + currentQuestionIndex + 1;
+    }
+
+    private string GetQuestionTypeDisplay(QuestionType type)
+    {
+        return type switch
+        {
+            QuestionType.MultipleChoice => "Multiple Choice",
+            QuestionType.TrueFalseNotGiven => "T/F/NG",
+            QuestionType.YesNoNotGiven => "Y/N/NG",
+            QuestionType.MatchingInformation => "Match Info",
+            QuestionType.MatchingHeadings => "Match Headings",
+            QuestionType.MatchingFeatures => "Match Features",
+            QuestionType.MatchingSentenceEndings => "Sentence Endings",
+            QuestionType.SentenceCompletion => "Completion",
+            QuestionType.SummaryCompletion => "Summary",
+            QuestionType.DiagramLabelCompletion => "Diagram",
+            QuestionType.ShortAnswerQuestions => "Short Answer",
+            _ => type.ToString()
+        };
+    }
+
+    private string FormatTimeSpan(TimeSpan timeSpan)
+    {
+        if (timeSpan.TotalHours >= 1)
+        {
+            return $"{(int)timeSpan.TotalHours:D2}:{timeSpan.Minutes:D2}:{timeSpan.Seconds:D2}";
+        }
+        return $"{timeSpan.Minutes:D2}:{timeSpan.Seconds:D2}";
+    }
+
+    private void ReviewAnswers()
+    {
+        // TODO: Implement answer review functionality
+        Navigation.NavigateTo($"/test/{TestId}/review");
+    }
+
+    private void RetakeTest()
+    {
+        // Reset test state
+        testStarted = false;
+        testCompleted = false;
+        userAnswers.Clear();
+        currentSectionIndex = 0;
+        currentQuestionIndex = 0;
+        remainingTime = TimeSpan.FromMinutes(currentTest!.TotalTimeMinutes);
+        timer?.Dispose();
+    }
+
+    public void Dispose()
+    {
+        timer?.Dispose();
+    }
+}

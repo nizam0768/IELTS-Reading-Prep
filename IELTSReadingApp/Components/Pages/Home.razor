@@ -1,0 +1,323 @@
+@page "/"
+@using IELTSReadingApp.Models
+@using IELTSReadingApp.Services
+@inject TestDataService TestDataService
+@inject NavigationManager Navigation
+@rendermode InteractiveServer
+
+<PageTitle>IELTS Academic Reading Practice</PageTitle>
+
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="text-center mb-5">
+                <h1 class="display-4 fw-bold text-primary mb-3">
+                    <i class="fas fa-book-open me-3"></i>IELTS Academic Reading Practice
+                </h1>
+                <p class="lead text-muted">Master your IELTS Academic Reading skills with our comprehensive practice tests</p>
+                <div class="row text-center mt-4">
+                    <div class="col-md-3">
+                        <div class="bg-light rounded p-3">
+                            <h5 class="text-primary mb-1">60 Minutes</h5>
+                            <small class="text-muted">Test Duration</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="bg-light rounded p-3">
+                            <h5 class="text-primary mb-1">40 Questions</h5>
+                            <small class="text-muted">Total Questions</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="bg-light rounded p-3">
+                            <h5 class="text-primary mb-1">3 Sections</h5>
+                            <small class="text-muted">Reading Passages</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="bg-light rounded p-3">
+                            <h5 class="text-primary mb-1">11 Types</h5>
+                            <small class="text-muted">Question Types</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Controls -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Filter by Difficulty:</label>
+                            <select class="form-select" @onchange="OnDifficultyChange">
+                                <option value="">All Levels</option>
+                                <option value="@DifficultyLevel.Beginner">Beginner</option>
+                                <option value="@DifficultyLevel.Intermediate">Intermediate</option>
+                                <option value="@DifficultyLevel.Advanced">Advanced</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Search by Category:</label>
+                            <input type="text" class="form-control" placeholder="e.g., Science, Technology..." 
+                                   @bind="searchCategory" @oninput="FilterTests" />
+                        </div>
+                        <div class="col-md-4 d-flex align-items-end">
+                            <button class="btn btn-outline-secondary w-100" @onclick="ResetFilters">
+                                <i class="fas fa-refresh me-2"></i>Reset Filters
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Practice Tests Cards -->
+    <div class="row">
+        @if (filteredTests.Any())
+        {
+            @foreach (var test in filteredTests)
+            {
+                <div class="col-lg-6 col-xl-4 mb-4">
+                    <div class="card h-100 shadow-sm border-0 practice-test-card">
+                        <div class="card-header bg-gradient-primary text-white border-0">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h5 class="card-title mb-1 fw-bold">@test.Title</h5>
+                                    <small class="opacity-75">
+                                        <i class="fas fa-tag me-1"></i>@test.Category
+                                    </small>
+                                </div>
+                                <span class="badge @GetDifficultyBadgeClass(test.Difficulty) fs-6">
+                                    @test.Difficulty
+                                </span>
+                            </div>
+                        </div>
+                        <div class="card-body d-flex flex-column">
+                            <p class="card-text text-muted mb-3 flex-grow-1">@test.Description</p>
+                            
+                            <div class="test-info mb-3">
+                                <div class="row text-center small">
+                                    <div class="col-4">
+                                        <div class="border rounded p-2">
+                                            <i class="fas fa-clock text-primary mb-1 d-block"></i>
+                                            <strong>@test.TotalTimeMinutes min</strong>
+                                        </div>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="border rounded p-2">
+                                            <i class="fas fa-question-circle text-success mb-1 d-block"></i>
+                                            <strong>@test.TotalQuestions Q</strong>
+                                        </div>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="border rounded p-2">
+                                            <i class="fas fa-file-alt text-info mb-1 d-block"></i>
+                                            <strong>@test.Sections.Count Sec</strong>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="question-types mb-3">
+                                <small class="text-muted d-block mb-2">Question Types:</small>
+                                <div class="d-flex flex-wrap gap-1">
+                                    @foreach (var section in test.Sections.Take(1))
+                                    {
+                                        @foreach (var questionType in section.Questions.Select(q => q.Type).Distinct().Take(3))
+                                        {
+                                            <span class="badge bg-light text-dark border small">
+                                                @GetQuestionTypeDisplay(questionType)
+                                            </span>
+                                        }
+                                    }
+                                    @if (test.Sections.SelectMany(s => s.Questions).Select(q => q.Type).Distinct().Count() > 3)
+                                    {
+                                        <span class="badge bg-light text-dark border small">+more</span>
+                                    }
+                                </div>
+                            </div>
+
+                            <div class="mt-auto">
+                                <button class="btn btn-primary w-100 fw-semibold" 
+                                        @onclick="() => StartTest(test.Id)">
+                                    <i class="fas fa-play me-2"></i>Start Practice Test
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-footer bg-transparent border-0 pt-0">
+                            <small class="text-muted">
+                                <i class="fas fa-calendar me-1"></i>
+                                Created: @test.CreatedDate.ToString("MMM dd, yyyy")
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="col-12">
+                <div class="text-center py-5">
+                    <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                    <h4 class="text-muted">No tests found</h4>
+                    <p class="text-muted">Try adjusting your filters to see more practice tests.</p>
+                </div>
+            </div>
+        }
+    </div>
+
+    <!-- About IELTS Reading Section -->
+    <div class="row mt-5">
+        <div class="col-12">
+            <div class="card bg-light border-0">
+                <div class="card-body">
+                    <h3 class="card-title text-center mb-4">About IELTS Academic Reading</h3>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5><i class="fas fa-info-circle text-primary me-2"></i>Test Format</h5>
+                            <ul class="list-unstyled">
+                                <li><i class="fas fa-check text-success me-2"></i>3 reading passages (2150-2750 words total)</li>
+                                <li><i class="fas fa-check text-success me-2"></i>40 questions in various formats</li>
+                                <li><i class="fas fa-check text-success me-2"></i>60 minutes (including transfer time)</li>
+                                <li><i class="fas fa-check text-success me-2"></i>Band scores from 1-9</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h5><i class="fas fa-list text-primary me-2"></i>Question Types</h5>
+                            <div class="row">
+                                <div class="col-6">
+                                    <small>
+                                        • Multiple Choice<br>
+                                        • True/False/Not Given<br>
+                                        • Yes/No/Not Given<br>
+                                        • Matching Information<br>
+                                        • Matching Headings<br>
+                                        • Matching Features
+                                    </small>
+                                </div>
+                                <div class="col-6">
+                                    <small>
+                                        • Sentence Endings<br>
+                                        • Sentence Completion<br>
+                                        • Summary Completion<br>
+                                        • Diagram Labeling<br>
+                                        • Short Answers
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .bg-gradient-primary {
+        background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+    }
+    
+    .practice-test-card {
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    .practice-test-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15) !important;
+    }
+    
+    .test-info .border {
+        border-color: #e9ecef !important;
+    }
+    
+    .question-types .badge {
+        font-size: 0.7rem;
+    }
+</style>
+
+@code {
+    private List<ReadingTest> allTests = new();
+    private List<ReadingTest> filteredTests = new();
+    private string searchCategory = "";
+    private DifficultyLevel? selectedDifficulty;
+
+    protected override void OnInitialized()
+    {
+        allTests = TestDataService.GetAllTests();
+        filteredTests = allTests;
+    }
+
+    private void OnDifficultyChange(ChangeEventArgs e)
+    {
+        if (string.IsNullOrEmpty(e.Value?.ToString()))
+        {
+            selectedDifficulty = null;
+        }
+        else
+        {
+            selectedDifficulty = Enum.Parse<DifficultyLevel>(e.Value.ToString()!);
+        }
+        FilterTests();
+    }
+
+    private void FilterTests()
+    {
+        filteredTests = allTests.Where(test =>
+        {
+            bool matchesDifficulty = selectedDifficulty == null || test.Difficulty == selectedDifficulty;
+            bool matchesCategory = string.IsNullOrWhiteSpace(searchCategory) || 
+                                 test.Category.Contains(searchCategory, StringComparison.OrdinalIgnoreCase) ||
+                                 test.Title.Contains(searchCategory, StringComparison.OrdinalIgnoreCase);
+            
+            return matchesDifficulty && matchesCategory;
+        }).ToList();
+    }
+
+    private void ResetFilters()
+    {
+        selectedDifficulty = null;
+        searchCategory = "";
+        filteredTests = allTests;
+    }
+
+    private void StartTest(int testId)
+    {
+        Navigation.NavigateTo($"/test/{testId}");
+    }
+
+    private string GetDifficultyBadgeClass(DifficultyLevel difficulty)
+    {
+        return difficulty switch
+        {
+            DifficultyLevel.Beginner => "bg-success",
+            DifficultyLevel.Intermediate => "bg-warning",
+            DifficultyLevel.Advanced => "bg-danger",
+            _ => "bg-secondary"
+        };
+    }
+
+    private string GetQuestionTypeDisplay(QuestionType type)
+    {
+        return type switch
+        {
+            QuestionType.MultipleChoice => "Multiple Choice",
+            QuestionType.TrueFalseNotGiven => "T/F/NG",
+            QuestionType.YesNoNotGiven => "Y/N/NG",
+            QuestionType.MatchingInformation => "Match Info",
+            QuestionType.MatchingHeadings => "Match Headings",
+            QuestionType.MatchingFeatures => "Match Features",
+            QuestionType.MatchingSentenceEndings => "Sentence Endings",
+            QuestionType.SentenceCompletion => "Completion",
+            QuestionType.SummaryCompletion => "Summary",
+            QuestionType.DiagramLabelCompletion => "Diagram",
+            QuestionType.ShortAnswerQuestions => "Short Answer",
+            _ => type.ToString()
+        };
+    }
+}
