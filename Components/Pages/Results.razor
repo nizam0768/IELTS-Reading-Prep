@@ -1,0 +1,225 @@
+@page "/results"
+@page "/results/{SessionId:int}"
+@using IELTSPracticeApp.Data.Models
+@using IELTSPracticeApp.Services
+@inject TestSessionService TestSessionService
+@inject NavigationManager Navigation
+@rendermode InteractiveServer
+
+<PageTitle>Test Results - IELTS Practice</PageTitle>
+
+<div class="container my-4">
+    @if (isLoading)
+    {
+        <div class="text-center">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading results...</span>
+            </div>
+            <p class="mt-3">Loading your test results...</p>
+        </div>
+    }
+    else if (results == null)
+    {
+        <div class="alert alert-warning">
+            <h4>No Results Found</h4>
+            <p>We couldn't find the test results you're looking for.</p>
+            <a href="/test" class="btn btn-primary">Take a Practice Test</a>
+        </div>
+    }
+    else
+    {
+        <!-- Results Header -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body text-center py-4">
+                        <h1 class="display-4 text-primary mb-3">
+                            <i class="fas fa-trophy"></i> Test Results
+                        </h1>
+                        <h2 class="text-muted">@results.PassageTitle</h2>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Score Overview -->
+        <div class="row mb-4">
+            <div class="col-md-3 col-sm-6 mb-3">
+                <div class="card text-center border-0 shadow-sm h-100">
+                    <div class="card-body">
+                        <div class="display-3 text-primary mb-2">@results.Score</div>
+                        <h5 class="card-title">Band Score</h5>
+                        <small class="text-muted">Out of 9.0</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6 mb-3">
+                <div class="card text-center border-0 shadow-sm h-100">
+                    <div class="card-body">
+                        <div class="display-3 text-success mb-2">@results.CorrectAnswers</div>
+                        <h5 class="card-title">Correct</h5>
+                        <small class="text-muted">Out of @results.TotalQuestions</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6 mb-3">
+                <div class="card text-center border-0 shadow-sm h-100">
+                    <div class="card-body">
+                        <div class="display-3 text-info mb-2">@results.TimeSpentMinutes</div>
+                        <h5 class="card-title">Minutes</h5>
+                        <small class="text-muted">Time Spent</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6 mb-3">
+                <div class="card text-center border-0 shadow-sm h-100">
+                    <div class="card-body">
+                        <div class="display-3 text-warning mb-2">@(Math.Round((double)results.CorrectAnswers / results.TotalQuestions * 100))%</div>
+                        <h5 class="card-title">Accuracy</h5>
+                        <small class="text-muted">Overall Performance</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Performance by Question Type -->
+        @if (results.QuestionTypePerformance?.Any() == true)
+        {
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-primary text-white">
+                            <h3 class="mb-0"><i class="fas fa-chart-pie"></i> Performance by Question Type</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                @foreach (var typePerf in results.QuestionTypePerformance)
+                                {
+                                    <div class="col-md-6 col-lg-4 mb-3">
+                                        <div class="border rounded p-3">
+                                            <h6 class="fw-bold">@typePerf.QuestionType</h6>
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <span>@typePerf.CorrectAnswers/@typePerf.TotalQuestions</span>
+                                                <span class="badge @(typePerf.Accuracy >= 75 ? "bg-success" : typePerf.Accuracy >= 50 ? "bg-warning" : "bg-danger")">
+                                                    @Math.Round(typePerf.Accuracy)%
+                                                </span>
+                                            </div>
+                                            <div class="progress mt-2" style="height: 8px;">
+                                                <div class="progress-bar @(typePerf.Accuracy >= 75 ? "bg-success" : typePerf.Accuracy >= 50 ? "bg-warning" : "bg-danger")" 
+                                                     style="width: @typePerf.Accuracy%"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+
+        <!-- Detailed Question Review -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-secondary text-white">
+                        <h3 class="mb-0"><i class="fas fa-list-check"></i> Question Review</h3>
+                    </div>
+                    <div class="card-body">
+                        @if (results.QuestionResults?.Any() == true)
+                        {
+                            @foreach (var question in results.QuestionResults)
+                            {
+                                <div class="border-bottom py-3 @(question != results.QuestionResults.Last() ? "mb-3" : "")">
+                                    <div class="row align-items-start">
+                                        <div class="col-md-1 text-center">
+                                            <span class="badge @(question.IsCorrect ? "bg-success" : "bg-danger") fs-6">
+                                                @if (question.IsCorrect)
+                                                {
+                                                    <i class="fas fa-check"></i>
+                                                }
+                                                else
+                                                {
+                                                    <i class="fas fa-times"></i>
+                                                }
+                                            </span>
+                                        </div>
+                                        <div class="col-md-11">
+                                            <h6 class="mb-2">@question.QuestionText</h6>
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <small class="text-muted d-block">Your Answer:</small>
+                                                    <span class="@(question.IsCorrect ? "text-success" : "text-danger")">
+                                                        @(string.IsNullOrEmpty(question.UserAnswer) ? "No answer provided" : question.UserAnswer)
+                                                    </span>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <small class="text-muted d-block">Correct Answer:</small>
+                                                    <span class="text-success">@question.CorrectAnswer</span>
+                                                </div>
+                                            </div>
+                                            <div class="mt-2">
+                                                <span class="badge bg-light text-dark">@question.QuestionType</span>
+                                                <span class="badge bg-info text-white ms-2">@question.PointsAwarded points</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="row">
+            <div class="col-12 text-center">
+                <a href="/test" class="btn btn-primary btn-lg me-3">
+                    <i class="fas fa-redo"></i> Take Another Test
+                </a>
+                <a href="/" class="btn btn-outline-secondary btn-lg">
+                    <i class="fas fa-home"></i> Back to Home
+                </a>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public int? SessionId { get; set; }
+
+    private dynamic? results;
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (SessionId.HasValue)
+        {
+            await LoadResults(SessionId.Value);
+        }
+        else
+        {
+            // If no session ID provided, show message
+            isLoading = false;
+        }
+    }
+
+    private async Task LoadResults(int sessionId)
+    {
+        try
+        {
+            results = await TestSessionService.GetTestResultsAsync(sessionId);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading results: {ex.Message}");
+            results = null;
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+}
