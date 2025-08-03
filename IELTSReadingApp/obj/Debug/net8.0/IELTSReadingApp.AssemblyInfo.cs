@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("IELTSReadingApp")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+0a0884d84dd70cd09e2e94ce48fb5ceb6976a72d")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+4d2060a38b35446c6f3ee58525cb3f903bc76406")]
 [assembly: System.Reflection.AssemblyProductAttribute("IELTSReadingApp")]
 [assembly: System.Reflection.AssemblyTitleAttribute("IELTSReadingApp")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
