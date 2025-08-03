@@ -1,0 +1,152 @@
+@using IELTSPracticeApp.Data.Models
+@using System.Text.Json
+
+<div class="multiple-choice-question">
+    @if (options.Any())
+    {
+        <div class="options-container">
+            @foreach (var option in options)
+            {
+                <div class="form-check option-item">
+                    <input class="form-check-input" 
+                           type="radio" 
+                           name="question_@Question.Id" 
+                           id="option_@Question.Id_@option.Key"
+                           value="@option.Key.ToLower()"
+                           checked="@(UserAnswer.ToLower() == option.Key.ToLower())"
+                           @onchange="@(async (e) => await HandleAnswerChange(e.Value?.ToString() ?? ""))" />
+                    <label class="form-check-label" for="option_@Question.Id_@option.Key">
+                        <span class="option-key">@option.Key</span>
+                        <span class="option-text">@option.Text</span>
+                    </label>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-warning">
+            <small>No options available for this question.</small>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public Question Question { get; set; } = null!;
+    [Parameter] public string UserAnswer { get; set; } = string.Empty;
+    [Parameter] public EventCallback<(int QuestionId, string Answer)> OnAnswerChanged { get; set; }
+
+    private List<QuestionOption> options = new();
+
+    protected override void OnParametersSet()
+    {
+        LoadOptions();
+    }
+
+    private void LoadOptions()
+    {
+        options.Clear();
+        
+        if (!string.IsNullOrEmpty(Question.Options))
+        {
+            try
+            {
+                var optionsJson = JsonSerializer.Deserialize<List<dynamic>>(Question.Options);
+                if (optionsJson != null)
+                {
+                    for (int i = 0; i < optionsJson.Count; i++)
+                    {
+                        var optionData = (JsonElement)optionsJson[i];
+                        var key = optionData.GetProperty("key").GetString() ?? "";
+                        var text = optionData.GetProperty("text").GetString() ?? "";
+                        
+                        options.Add(new QuestionOption
+                        {
+                            OptionKey = key,
+                            OptionText = text,
+                            OptionOrder = i + 1
+                        });
+                    }
+                }
+            }
+            catch (JsonException)
+            {
+                // Fallback to default options if JSON parsing fails
+                options = new List<QuestionOption>
+                {
+                    new QuestionOption { OptionKey = "A", OptionText = "Option A", OptionOrder = 1 },
+                    new QuestionOption { OptionKey = "B", OptionText = "Option B", OptionOrder = 2 },
+                    new QuestionOption { OptionKey = "C", OptionText = "Option C", OptionOrder = 3 },
+                    new QuestionOption { OptionKey = "D", OptionText = "Option D", OptionOrder = 4 }
+                };
+            }
+        }
+    }
+
+    private async Task HandleAnswerChange(string selectedValue)
+    {
+        await OnAnswerChanged.InvokeAsync((Question.Id, selectedValue));
+    }
+}
+
+<style>
+    .multiple-choice-question {
+        margin-top: 1rem;
+    }
+
+    .options-container {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .option-item {
+        padding: 0.75rem;
+        border: 2px solid #e9ecef;
+        border-radius: 0.5rem;
+        transition: all 0.2s ease;
+        cursor: pointer;
+    }
+
+    .option-item:hover {
+        border-color: #0d6efd;
+        background-color: #f8f9fa;
+    }
+
+    .option-item:has(.form-check-input:checked) {
+        border-color: #0d6efd;
+        background-color: #e7f3ff;
+    }
+
+    .form-check-input {
+        margin-top: 0.125rem;
+    }
+
+    .form-check-label {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.75rem;
+        cursor: pointer;
+        width: 100%;
+    }
+
+    .option-key {
+        font-weight: bold;
+        color: #0d6efd;
+        min-width: 1.5rem;
+        text-align: center;
+        background-color: #f8f9fa;
+        border-radius: 0.25rem;
+        padding: 0.125rem 0.5rem;
+    }
+
+    .option-text {
+        flex: 1;
+        line-height: 1.4;
+    }
+
+    .option-item:has(.form-check-input:checked) .option-key {
+        background-color: #0d6efd;
+        color: white;
+    }
+</style>

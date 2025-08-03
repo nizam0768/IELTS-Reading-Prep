@@ -1,0 +1,173 @@
+@using IELTSPracticeApp.Data.Models
+
+<div class="true-false-not-given-question">
+    <div class="options-container">
+        <div class="form-check option-item @(UserAnswer.ToLower() == "true" ? "selected" : "")">
+            <input class="form-check-input" 
+                   type="radio" 
+                   name="question_@Question.Id" 
+                   id="true_@Question.Id"
+                   value="true"
+                   checked="@(UserAnswer.ToLower() == "true")"
+                   @onchange="@(async (e) => await HandleAnswerChange("true"))" />
+            <label class="form-check-label" for="true_@Question.Id">
+                <span class="option-indicator true-indicator">✓</span>
+                <span class="option-text">TRUE</span>
+            </label>
+        </div>
+
+        <div class="form-check option-item @(UserAnswer.ToLower() == "false" ? "selected" : "")">
+            <input class="form-check-input" 
+                   type="radio" 
+                   name="question_@Question.Id" 
+                   id="false_@Question.Id"
+                   value="false"
+                   checked="@(UserAnswer.ToLower() == "false")"
+                   @onchange="@(async (e) => await HandleAnswerChange("false"))" />
+            <label class="form-check-label" for="false_@Question.Id">
+                <span class="option-indicator false-indicator">✗</span>
+                <span class="option-text">FALSE</span>
+            </label>
+        </div>
+
+        <div class="form-check option-item @(UserAnswer.ToLower() == "not given" ? "selected" : "")">
+            <input class="form-check-input" 
+                   type="radio" 
+                   name="question_@Question.Id" 
+                   id="notgiven_@Question.Id"
+                   value="not given"
+                   checked="@(UserAnswer.ToLower() == "not given")"
+                   @onchange="@(async (e) => await HandleAnswerChange("not given"))" />
+            <label class="form-check-label" for="notgiven_@Question.Id">
+                <span class="option-indicator not-given-indicator">?</span>
+                <span class="option-text">NOT GIVEN</span>
+            </label>
+        </div>
+    </div>
+    
+    <div class="help-text mt-3">
+        <small class="text-muted">
+            <strong>TRUE:</strong> The statement agrees with the information in the passage.<br>
+            <strong>FALSE:</strong> The statement contradicts the information in the passage.<br>
+            <strong>NOT GIVEN:</strong> There is no information about this in the passage.
+        </small>
+    </div>
+</div>
+
+@code {
+    [Parameter] public Question Question { get; set; } = null!;
+    [Parameter] public string UserAnswer { get; set; } = string.Empty;
+    [Parameter] public EventCallback<(int QuestionId, string Answer)> OnAnswerChanged { get; set; }
+
+    private async Task HandleAnswerChange(string selectedValue)
+    {
+        await OnAnswerChanged.InvokeAsync((Question.Id, selectedValue));
+    }
+}
+
+<style>
+    .true-false-not-given-question {
+        margin-top: 1rem;
+    }
+
+    .options-container {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .option-item {
+        padding: 1rem;
+        border: 2px solid #e9ecef;
+        border-radius: 0.5rem;
+        transition: all 0.2s ease;
+        cursor: pointer;
+        position: relative;
+    }
+
+    .option-item:hover {
+        border-color: #6c757d;
+        background-color: #f8f9fa;
+    }
+
+    .option-item.selected {
+        background-color: #e7f3ff;
+    }
+
+    .option-item:has(.form-check-input:checked) {
+        border-color: #0d6efd;
+        background-color: #e7f3ff;
+    }
+
+    .form-check-input {
+        margin-top: 0.125rem;
+    }
+
+    .form-check-label {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        cursor: pointer;
+        width: 100%;
+        font-weight: 500;
+    }
+
+    .option-indicator {
+        width: 2rem;
+        height: 2rem;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 1.1rem;
+    }
+
+    .true-indicator {
+        background-color: #d4edda;
+        color: #155724;
+        border: 2px solid #c3e6cb;
+    }
+
+    .false-indicator {
+        background-color: #f8d7da;
+        color: #721c24;
+        border: 2px solid #f5c6cb;
+    }
+
+    .not-given-indicator {
+        background-color: #fff3cd;
+        color: #856404;
+        border: 2px solid #ffeaa7;
+    }
+
+    .option-item:has(.form-check-input:checked) .true-indicator {
+        background-color: #28a745;
+        color: white;
+        border-color: #28a745;
+    }
+
+    .option-item:has(.form-check-input:checked) .false-indicator {
+        background-color: #dc3545;
+        color: white;
+        border-color: #dc3545;
+    }
+
+    .option-item:has(.form-check-input:checked) .not-given-indicator {
+        background-color: #ffc107;
+        color: #212529;
+        border-color: #ffc107;
+    }
+
+    .option-text {
+        font-size: 1rem;
+        letter-spacing: 0.5px;
+    }
+
+    .help-text {
+        padding: 0.75rem;
+        background-color: #f8f9fa;
+        border-radius: 0.375rem;
+        border-left: 4px solid #0d6efd;
+    }
+</style>

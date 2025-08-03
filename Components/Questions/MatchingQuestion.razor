@@ -1,0 +1,188 @@
+@using IELTSPracticeApp.Data.Models
+
+<div class="matching-question">
+    <div class="matching-container">
+        <div class="form-floating">
+            <select class="form-select" 
+                    id="match_@Question.Id"
+                    value="@currentAnswer"
+                    @onchange="HandleSelectionChange">
+                <option value="">-- Select an option --</option>
+                @foreach (var option in GetMatchingOptions())
+                {
+                    <option value="@option.Value">@option.Text</option>
+                }
+            </select>
+            <label for="match_@Question.Id">Select your answer</label>
+        </div>
+    </div>
+
+    @if (ShowHelpText)
+    {
+        <div class="help-text mt-3">
+            <small class="text-muted">
+                @switch (Question.QuestionType)
+                {
+                    case QuestionType.MatchingInformation:
+                        <span><i class="fas fa-search"></i> Match the information to the correct paragraph or section. Look for specific details and facts.</span>
+                        break;
+                    case QuestionType.MatchingHeadings:
+                        <span><i class="fas fa-heading"></i> Match each heading to the correct paragraph. Focus on the main idea of each paragraph.</span>
+                        break;
+                    case QuestionType.MatchingFeatures:
+                        <span><i class="fas fa-link"></i> Match the features to the correct category, person, or time period mentioned in the passage.</span>
+                        break;
+                    case QuestionType.MatchingSentenceEndings:
+                        <span><i class="fas fa-puzzle-piece"></i> Choose the correct ending that completes the sentence based on the passage.</span>
+                        break;
+                }
+            </small>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public Question Question { get; set; } = null!;
+    [Parameter] public string UserAnswer { get; set; } = string.Empty;
+    [Parameter] public EventCallback<(int QuestionId, string Answer)> OnAnswerChanged { get; set; }
+    [Parameter] public bool ShowHelpText { get; set; } = true;
+
+    private string currentAnswer = string.Empty;
+
+    protected override void OnParametersSet()
+    {
+        currentAnswer = UserAnswer;
+    }
+
+    private async Task HandleSelectionChange(ChangeEventArgs e)
+    {
+        currentAnswer = e.Value?.ToString() ?? string.Empty;
+        await OnAnswerChanged.InvokeAsync((Question.Id, currentAnswer));
+    }
+
+    private List<MatchingOption> GetMatchingOptions()
+    {
+        return Question.QuestionType switch
+        {
+            QuestionType.MatchingInformation => GetParagraphOptions(),
+            QuestionType.MatchingHeadings => GetHeadingOptions(),
+            QuestionType.MatchingFeatures => GetFeatureOptions(),
+            QuestionType.MatchingSentenceEndings => GetSentenceEndingOptions(),
+            _ => new List<MatchingOption>()
+        };
+    }
+
+    private List<MatchingOption> GetParagraphOptions()
+    {
+        return new List<MatchingOption>
+        {
+            new("A", "Paragraph A"),
+            new("B", "Paragraph B"),
+            new("C", "Paragraph C"),
+            new("D", "Paragraph D"),
+            new("E", "Paragraph E"),
+            new("F", "Paragraph F"),
+            new("G", "Paragraph G"),
+            new("H", "Paragraph H"),
+            new("I", "Paragraph I")
+        };
+    }
+
+    private List<MatchingOption> GetHeadingOptions()
+    {
+        return new List<MatchingOption>
+        {
+            new("i", "i - Introduction to the topic"),
+            new("ii", "ii - Historical background"),
+            new("iii", "iii - Current situation"),
+            new("iv", "iv - Future implications"),
+            new("v", "v - Research findings"),
+            new("vi", "vi - Practical applications"),
+            new("vii", "vii - Challenges and limitations"),
+            new("viii", "viii - Conclusion and recommendations")
+        };
+    }
+
+    private List<MatchingOption> GetFeatureOptions()
+    {
+        return new List<MatchingOption>
+        {
+            new("A", "Person A"),
+            new("B", "Person B"),
+            new("C", "Person C"),
+            new("D", "Person D"),
+            new("E", "Person E")
+        };
+    }
+
+    private List<MatchingOption> GetSentenceEndingOptions()
+    {
+        return new List<MatchingOption>
+        {
+            new("A", "A - affects marine life significantly."),
+            new("B", "B - requires immediate global action."),
+            new("C", "C - has been accelerating since industrialization."),
+            new("D", "D - impacts coastal communities worldwide."),
+            new("E", "E - needs further scientific research."),
+            new("F", "F - can be mitigated through conservation efforts.")
+        };
+    }
+
+    private record MatchingOption(string Value, string Text);
+}
+
+<style>
+    .matching-question {
+        margin-top: 1rem;
+    }
+
+    .matching-container {
+        position: relative;
+    }
+
+    .form-floating {
+        position: relative;
+    }
+
+    .form-select {
+        border: 2px solid #e9ecef;
+        border-radius: 0.5rem;
+        padding: 1rem 0.75rem 0.5rem;
+        font-size: 1rem;
+        transition: all 0.2s ease;
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right 0.75rem center;
+        background-size: 16px 12px;
+    }
+
+    .form-select:focus {
+        border-color: #0d6efd;
+        box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+    }
+
+    .form-floating > label {
+        padding: 1rem 0.75rem;
+        color: #6c757d;
+        font-size: 0.875rem;
+    }
+
+    .form-select:focus ~ label,
+    .form-select:not(:placeholder-shown) ~ label {
+        opacity: 0.65;
+        transform: scale(0.85) translateY(-0.5rem) translateX(0.15rem);
+    }
+
+    .help-text {
+        padding: 0.75rem;
+        background-color: #f8f9fa;
+        border-radius: 0.375rem;
+        border-left: 4px solid #6f42c1;
+    }
+
+    @media (max-width: 768px) {
+        .form-select {
+            font-size: 16px; /* Prevents zoom on iOS */
+        }
+    }
+</style>

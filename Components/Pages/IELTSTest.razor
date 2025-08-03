@@ -1,0 +1,405 @@
+@page "/test"
+@page "/test/{PassageId:int}"
+@using IELTSPracticeApp.Data.Models
+@using IELTSPracticeApp.Services
+@inject IELTSService IELTSService
+@inject TestSessionService TestSessionService
+@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
+@implements IDisposable
+@rendermode InteractiveServer
+
+<PageTitle>IELTS Academic Reading Practice Test</PageTitle>
+
+<div class="ielts-test-container">
+    @if (isLoading)
+    {
+        <div class="loading-spinner">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-3">Loading test...</p>
+        </div>
+    }
+    else if (currentPassage == null)
+    {
+        <div class="alert alert-danger">
+            <h4>Test Not Found</h4>
+            <p>The requested reading passage could not be found.</p>
+            <a href="/" class="btn btn-primary">Return to Home</a>
+        </div>
+    }
+    else
+    {
+        <!-- Test Header -->
+        <div class="test-header">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <h1 class="test-title">IELTS Academic Reading</h1>
+                    <p class="test-subtitle">@currentPassage.Title</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <div class="timer-container">
+                        <div class="timer @(remainingMinutes <= 5 ? "timer-warning" : "")">
+                            <i class="fas fa-clock"></i>
+                            <span class="timer-text">@timeDisplay</span>
+                        </div>
+                        @if (currentSession?.Status == TestSessionStatus.InProgress)
+                        {
+                            <button class="btn btn-outline-secondary btn-sm ms-2" @onclick="PauseTest">
+                                <i class="fas fa-pause"></i> Pause
+                            </button>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Reading Passage Column -->
+            <div class="col-lg-7">
+                <div class="passage-container">
+                    <div class="passage-header">
+                        <h2>Reading Passage</h2>
+                        <div class="passage-meta">
+                            <span class="badge bg-info">@currentPassage.WordCount words</span>
+                            <span class="badge bg-secondary">@currentPassage.DifficultyLevel</span>
+                        </div>
+                    </div>
+                    <div class="passage-content">
+                        @((MarkupString)FormatPassageContent(currentPassage.Content))
+                    </div>
+                </div>
+            </div>
+
+            <!-- Questions Column -->
+            <div class="col-lg-5">
+                <div class="questions-container">
+                    <div class="questions-header">
+                        <h2>Questions (@currentQuestionIndex + 1 of @questions.Count)</h2>
+                        <div class="progress mb-3">
+                            <div class="progress-bar" role="progressbar" 
+                                 style="width: @(((double)(currentQuestionIndex + 1) / questions.Count) * 100)%">
+                            </div>
+                        </div>
+                    </div>
+
+                    @if (questions.Any())
+                    {
+                        var currentQuestion = questions[currentQuestionIndex];
+                        <div class="question-card">
+                            <div class="question-type-badge">
+                                <span class="badge bg-primary">@GetQuestionTypeName(currentQuestion.QuestionType)</span>
+                            </div>
+                            
+                            @if (!string.IsNullOrEmpty(currentQuestion.Instructions))
+                            {
+                                <div class="question-instructions">
+                                    <small class="text-muted">@currentQuestion.Instructions</small>
+                                </div>
+                            }
+
+                            <div class="question-content">
+                                <h4 class="question-text">@currentQuestion.QuestionText</h4>
+                                
+                                <!-- Dynamic Question Component -->
+                                @switch (currentQuestion.QuestionType)
+                                {
+                                    case QuestionType.MultipleChoice:
+                                        <MultipleChoiceQuestion Question="currentQuestion" 
+                                                              UserAnswer="GetUserAnswer(currentQuestion.Id)"
+                                                              OnAnswerChanged="OnAnswerChanged" />
+                                        break;
+                                    case QuestionType.TrueFalseNotGiven:
+                                        <TrueFalseNotGivenQuestion Question="currentQuestion" 
+                                                                 UserAnswer="GetUserAnswer(currentQuestion.Id)"
+                                                                 OnAnswerChanged="OnAnswerChanged" />
+                                        break;
+                                    case QuestionType.YesNoNotGiven:
+                                        <YesNoNotGivenQuestion Question="currentQuestion" 
+                                                             UserAnswer="GetUserAnswer(currentQuestion.Id)"
+                                                             OnAnswerChanged="OnAnswerChanged" />
+                                        break;
+                                    case QuestionType.SentenceCompletion:
+                                    case QuestionType.SummaryCompletion:
+                                    case QuestionType.DiagramLabelCompletion:
+                                    case QuestionType.ShortAnswerQuestions:
+                                        <TextInputQuestion Question="currentQuestion" 
+                                                         UserAnswer="GetUserAnswer(currentQuestion.Id)"
+                                                         OnAnswerChanged="OnAnswerChanged" />
+                                        break;
+                                    case QuestionType.MatchingInformation:
+                                    case QuestionType.MatchingHeadings:
+                                    case QuestionType.MatchingFeatures:
+                                    case QuestionType.MatchingSentenceEndings:
+                                        <MatchingQuestion Question="currentQuestion" 
+                                                        UserAnswer="GetUserAnswer(currentQuestion.Id)"
+                                                        OnAnswerChanged="OnAnswerChanged" />
+                                        break;
+                                }
+                            </div>
+
+                            <!-- Navigation Buttons -->
+                            <div class="question-navigation">
+                                <button class="btn btn-outline-secondary" 
+                                        @onclick="PreviousQuestion" 
+                                        disabled="@(currentQuestionIndex == 0)">
+                                    <i class="fas fa-chevron-left"></i> Previous
+                                </button>
+                                
+                                @if (currentQuestionIndex < questions.Count - 1)
+                                {
+                                    <button class="btn btn-primary ms-2" @onclick="NextQuestion">
+                                        Next <i class="fas fa-chevron-right"></i>
+                                    </button>
+                                }
+                                else
+                                {
+                                    <button class="btn btn-success ms-2" @onclick="ShowSubmitConfirmation">
+                                        <i class="fas fa-check"></i> Submit Test
+                                    </button>
+                                }
+                            </div>
+                        </div>
+
+                        <!-- Question Overview -->
+                        <div class="question-overview mt-4">
+                            <h5>Question Overview</h5>
+                            <div class="question-grid">
+                                @for (int i = 0; i < questions.Count; i++)
+                                {
+                                    var questionNum = i;
+                                    var isAnswered = userAnswers.ContainsKey(questions[i].Id);
+                                    var isCurrent = i == currentQuestionIndex;
+                                    
+                                    <button class="question-number @(isCurrent ? "current" : "") @(isAnswered ? "answered" : "")" 
+                                            @onclick="() => GoToQuestion(questionNum)">
+                                        @(i + 1)
+                                    </button>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<!-- Submit Confirmation Modal -->
+@if (showSubmitModal)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Submit Test</h5>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to submit your test?</p>
+                    <p><strong>Answered:</strong> @userAnswers.Count of @questions.Count questions</p>
+                    <p><strong>Time remaining:</strong> @timeDisplay</p>
+                    <div class="alert alert-warning">
+                        <small>Once submitted, you cannot change your answers.</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="HideSubmitConfirmation">Cancel</button>
+                    <button type="button" class="btn btn-success" @onclick="SubmitTest">
+                        <i class="fas fa-check"></i> Submit Test
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public int? PassageId { get; set; }
+
+    private ReadingPassage? currentPassage;
+    private List<Question> questions = new();
+    private TestSession? currentSession;
+    private Dictionary<int, string> userAnswers = new();
+    private bool isLoading = true;
+    private int currentQuestionIndex = 0;
+    private string userId = string.Empty;
+    private Timer? timer;
+    private int remainingMinutes = 60;
+    private string timeDisplay = "60:00";
+    private bool showSubmitModal = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        userId = IELTSService.GenerateAnonymousUserId();
+        
+        if (PassageId.HasValue)
+        {
+            await LoadTest(PassageId.Value);
+        }
+        else
+        {
+            // Load first available passage
+            var passages = await IELTSService.GetAllReadingPassagesAsync();
+            if (passages.Any())
+            {
+                await LoadTest(passages.First().Id);
+            }
+        }
+
+        StartTimer();
+    }
+
+    private async Task LoadTest(int passageId)
+    {
+        try
+        {
+            currentPassage = await IELTSService.GetReadingPassageAsync(passageId);
+            if (currentPassage == null) return;
+
+            questions = await IELTSService.GetQuestionsForPassageAsync(passageId);
+            
+            // Check for existing active session
+            currentSession = await TestSessionService.GetActiveTestSessionAsync(userId);
+            
+            if (currentSession == null || currentSession.ReadingPassageId != passageId)
+            {
+                // Start new session
+                currentSession = await TestSessionService.StartTestSessionAsync(userId, passageId);
+            }
+            else
+            {
+                // Load existing answers
+                foreach (var answer in currentSession.UserAnswers)
+                {
+                    userAnswers[answer.QuestionId] = answer.UserResponse;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading test: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private void StartTimer()
+    {
+        timer = new Timer(async _ =>
+        {
+            if (currentSession?.Status == TestSessionStatus.InProgress)
+            {
+                var elapsed = (int)(DateTime.UtcNow - currentSession.StartTime).TotalMinutes;
+                remainingMinutes = Math.Max(0, 60 - elapsed);
+                timeDisplay = $"{remainingMinutes}:{(60 - elapsed % 1) * 60:00}";
+
+                if (remainingMinutes <= 0)
+                {
+                    await SubmitTest();
+                }
+
+                await InvokeAsync(StateHasChanged);
+            }
+        }, null, TimeSpan.Zero, TimeSpan.FromSeconds(1));
+    }
+
+    private string FormatPassageContent(string content)
+    {
+        // Add paragraph breaks and formatting
+        return content.Replace("\n\n", "</p><p>")
+                     .Replace("\n", "<br>")
+                     .Insert(0, "<p>") + "</p>";
+    }
+
+    private string GetQuestionTypeName(QuestionType type)
+    {
+        return type switch
+        {
+            QuestionType.MultipleChoice => "Multiple Choice",
+            QuestionType.TrueFalseNotGiven => "True/False/Not Given",
+            QuestionType.YesNoNotGiven => "Yes/No/Not Given",
+            QuestionType.MatchingInformation => "Matching Information",
+            QuestionType.MatchingHeadings => "Matching Headings",
+            QuestionType.MatchingFeatures => "Matching Features",
+            QuestionType.MatchingSentenceEndings => "Matching Sentence Endings",
+            QuestionType.SentenceCompletion => "Sentence Completion",
+            QuestionType.SummaryCompletion => "Summary Completion",
+            QuestionType.DiagramLabelCompletion => "Diagram Label Completion",
+            QuestionType.ShortAnswerQuestions => "Short Answer Questions",
+            _ => type.ToString()
+        };
+    }
+
+    private string GetUserAnswer(int questionId)
+    {
+        return userAnswers.GetValueOrDefault(questionId, string.Empty);
+    }
+
+    private async Task OnAnswerChanged(int questionId, string answer)
+    {
+        userAnswers[questionId] = answer;
+        
+        if (currentSession != null)
+        {
+            await TestSessionService.SubmitAnswerAsync(currentSession.Id, questionId, answer);
+        }
+    }
+
+    private void NextQuestion()
+    {
+        if (currentQuestionIndex < questions.Count - 1)
+        {
+            currentQuestionIndex++;
+        }
+    }
+
+    private void PreviousQuestion()
+    {
+        if (currentQuestionIndex > 0)
+        {
+            currentQuestionIndex--;
+        }
+    }
+
+    private void GoToQuestion(int index)
+    {
+        currentQuestionIndex = index;
+    }
+
+    private async Task PauseTest()
+    {
+        if (currentSession != null)
+        {
+            await TestSessionService.PauseTestSessionAsync(currentSession.Id);
+            timer?.Dispose();
+        }
+    }
+
+    private void ShowSubmitConfirmation()
+    {
+        showSubmitModal = true;
+    }
+
+    private void HideSubmitConfirmation()
+    {
+        showSubmitModal = false;
+    }
+
+    private async Task SubmitTest()
+    {
+        if (currentSession != null)
+        {
+            await TestSessionService.CompleteTestSessionAsync(currentSession.Id);
+            Navigation.NavigateTo($"/results/{currentSession.Id}");
+        }
+    }
+
+    public void Dispose()
+    {
+        timer?.Dispose();
+    }
+}

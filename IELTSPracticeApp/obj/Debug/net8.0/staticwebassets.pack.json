@@ -1,0 +1,41 @@
+{
+  "Files": [
+    {
+      "Id": "/workspace/IELTSPracticeApp/obj/Debug/net8.0/scopedcss/projectbundle/IELTSPracticeApp.bundle.scp.css",
+      "PackagePath": "staticwebassets/IELTSPracticeApp.bundle.scp.css"
+    },
+    {
+      "Id": "/workspace/IELTSPracticeApp/wwwroot/app.css",
+      "PackagePath": "staticwebassets/app.css"
+    },
+    {
+      "Id": "/workspace/IELTSPracticeApp/wwwroot/bootstrap/bootstrap.min.css",
+      "PackagePath": "staticwebassets/bootstrap/bootstrap.min.css"
+    },
+    {
+      "Id": "/workspace/IELTSPracticeApp/wwwroot/bootstrap/bootstrap.min.css.map",
+      "PackagePath": "staticwebassets/bootstrap/bootstrap.min.css.map"
+    },
+    {
+      "Id": "/workspace/IELTSPracticeApp/wwwroot/favicon.png",
+      "PackagePath": "staticwebassets/favicon.png"
+    },
+    {
+      "Id": "obj/Debug/net8.0/staticwebassets/msbuild.IELTSPracticeApp.Microsoft.AspNetCore.StaticWebAssets.props",
+      "PackagePath": "build\\Microsoft.AspNetCore.StaticWebAssets.props"
+    },
+    {
+      "Id": "obj/Debug/net8.0/staticwebassets/msbuild.build.IELTSPracticeApp.props",
+      "PackagePath": "build\\IELTSPracticeApp.props"
+    },
+    {
+      "Id": "obj/Debug/net8.0/staticwebassets/msbuild.buildMultiTargeting.IELTSPracticeApp.props",
+      "PackagePath": "buildMultiTargeting\\IELTSPracticeApp.props"
+    },
+    {
+      "Id": "obj/Debug/net8.0/staticwebassets/msbuild.buildTransitive.IELTSPracticeApp.props",
+      "PackagePath": "buildTransitive\\IELTSPracticeApp.props"
+    }
+  ],
+  "ElementsToRemove": []
+}

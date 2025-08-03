@@ -1,0 +1,256 @@
+@page "/"
+@using IELTSPracticeApp.Services
+@inject IELTSService IELTSService
+@inject NavigationManager Navigation
+@rendermode InteractiveServer
+
+<PageTitle>IELTS Academic Reading Practice</PageTitle>
+
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="container">
+        <h1 class="hero-title">IELTS Academic Reading Practice</h1>
+        <p class="hero-subtitle">Master your IELTS Reading skills with our comprehensive practice tests featuring all 11 question types</p>
+        <div class="mt-4">
+            <a href="/test" class="btn btn-light btn-lg me-3">
+                <i class="fas fa-play-circle"></i> Start Practice Test
+            </a>
+            <a href="#features" class="btn btn-outline-light btn-lg">
+                <i class="fas fa-info-circle"></i> Learn More
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section id="features" class="container my-5">
+    <div class="row text-center mb-5">
+        <div class="col-12">
+            <h2 class="display-4 mb-3">Why Choose Our IELTS Practice?</h2>
+            <p class="lead text-muted">Comprehensive preparation tools designed to help you achieve your target band score</p>
+        </div>
+    </div>
+    
+    <div class="row g-4">
+        <div class="col-md-4">
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-list-ol"></i>
+                </div>
+                <h3 class="feature-title">All 11 Question Types</h3>
+                <p class="feature-description">
+                    Practice with every IELTS Academic Reading question type including Multiple Choice, True/False/Not Given, 
+                    Matching, Sentence Completion, and more.
+                </p>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <h3 class="feature-title">Real-Time Timer</h3>
+                <p class="feature-description">
+                    Experience authentic test conditions with our 60-minute timer. Practice time management 
+                    and build confidence for the actual exam.
+                </p>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <h3 class="feature-title">Instant Feedback</h3>
+                <p class="feature-description">
+                    Get immediate results with detailed explanations and band score calculations. 
+                    Track your progress and identify areas for improvement.
+                </p>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-book-open"></i>
+                </div>
+                <h3 class="feature-title">Authentic Passages</h3>
+                <p class="feature-description">
+                    Practice with academic texts similar to those in the real IELTS exam, 
+                    covering diverse topics from journals, magazines, and academic sources.
+                </p>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-mobile-alt"></i>
+                </div>
+                <h3 class="feature-title">Responsive Design</h3>
+                <p class="feature-description">
+                    Practice anywhere, anytime with our mobile-friendly interface. 
+                    Seamless experience across all devices and screen sizes.
+                </p>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-database"></i>
+                </div>
+                <h3 class="feature-title">Progress Tracking</h3>
+                <p class="feature-description">
+                    Monitor your performance over time with detailed statistics and 
+                    personalized insights to optimize your study plan.
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Question Types Section -->
+<section class="bg-light py-5">
+    <div class="container">
+        <div class="row text-center mb-5">
+            <div class="col-12">
+                <h2 class="display-5 mb-3">IELTS Reading Question Types</h2>
+                <p class="lead text-muted">Master all 11 official IELTS Academic Reading question types</p>
+            </div>
+        </div>
+        
+        <div class="row g-3">
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body text-center">
+                        <div class="text-primary mb-3">
+                            <i class="fas fa-check-circle fa-2x"></i>
+                        </div>
+                        <h5 class="card-title">Multiple Choice</h5>
+                        <p class="card-text small text-muted">Choose the correct answer from 4 options</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body text-center">
+                        <div class="text-success mb-3">
+                            <i class="fas fa-question-circle fa-2x"></i>
+                        </div>
+                        <h5 class="card-title">True/False/Not Given</h5>
+                        <p class="card-text small text-muted">Identify if statements agree with the passage</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body text-center">
+                        <div class="text-info mb-3">
+                            <i class="fas fa-thumbs-up fa-2x"></i>
+                        </div>
+                        <h5 class="card-title">Yes/No/Not Given</h5>
+                        <p class="card-text small text-muted">Evaluate writer's views and claims</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body text-center">
+                        <div class="text-warning mb-3">
+                            <i class="fas fa-link fa-2x"></i>
+                        </div>
+                        <h5 class="card-title">Matching Information</h5>
+                        <p class="card-text small text-muted">Match information to paragraphs</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body text-center">
+                        <div class="text-danger mb-3">
+                            <i class="fas fa-heading fa-2x"></i>
+                        </div>
+                        <h5 class="card-title">Matching Headings</h5>
+                        <p class="card-text small text-muted">Match headings to paragraphs</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body text-center">
+                        <div class="text-secondary mb-3">
+                            <i class="fas fa-edit fa-2x"></i>
+                        </div>
+                        <h5 class="card-title">And 6 More Types</h5>
+                        <p class="card-text small text-muted">Including sentence completion, summary completion, and more</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Stats Section -->
+@if (stats != null)
+{
+    <section class="stats-section">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="stat-item">
+                        <span class="stat-number">@stats.TotalTests</span>
+                        <div class="stat-label">Tests Completed</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="stat-item">
+                        <span class="stat-number">@stats.AverageScore</span>
+                        <div class="stat-label">Average Band Score</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="stat-item">
+                        <span class="stat-number">@stats.TotalUsers</span>
+                        <div class="stat-label">Active Users</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+}
+
+<!-- Call to Action -->
+<section class="py-5">
+    <div class="container text-center">
+        <h2 class="display-5 mb-3">Ready to Start Practicing?</h2>
+        <p class="lead text-muted mb-4">Join thousands of students who have improved their IELTS Reading scores</p>
+        <a href="/test" class="btn btn-primary btn-lg">
+            <i class="fas fa-rocket"></i> Start Your Practice Test Now
+        </a>
+    </div>
+</section>
+
+@code {
+    private dynamic? stats;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            stats = await IELTSService.GetTestStatisticsAsync();
+        }
+        catch (Exception)
+        {
+            // Handle error silently for now
+            stats = new { TotalTests = 0, AverageScore = 0.0, TotalUsers = 0 };
+        }
+    }
+}
